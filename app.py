@@ -5,6 +5,48 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="E-Commerce Intelligence Portal", layout="wide")
 
+# Custom CSS for Sleek Visual Styling & UI Enhancements
+st.markdown("""
+    <style>
+    /* Gradient Background */
+    .stApp {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #f8fafc;
+    }
+    
+    /* Styled Metric Container Cards */
+    div[data-testid="stMetric"] {
+        background-color: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 18px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Custom Header Styling */
+    h1, h2, h3 {
+        font-family: 'Inter', sans-serif;
+        color: #f1f5f9 !important;
+        font-weight: 700;
+    }
+
+    /* Primary Accent Buttons */
+    .stButton>button {
+        background-color: #3b82f6;
+        color: white;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        padding: 8px 16px;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #2563eb;
+        transform: translateY(-1px);
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Password Authentication Gate
 def check_password():
     if "authenticated" not in st.session_state:
@@ -25,7 +67,7 @@ def check_password():
 if check_password():
     st.title("🚀 E-Commerce Operations & Interactive Intelligence Portal")
 
-    # File Uploader with Interactive Fallback
+    # File Uploader
     uploaded_file = st.file_uploader("Upload Sales CSV", type=["csv"])
     
     if uploaded_file is not None:
@@ -33,7 +75,6 @@ if check_password():
         df["Date"] = pd.to_datetime(df["Date"])
     else:
         st.info("💡 Showing sample dataset. Upload a CSV to view your own store metrics.")
-        # Generate rich interactive dataset
         dates = pd.date_range(start="2026-01-01", periods=14, freq="D")
         df = pd.DataFrame({
             "Date": dates,
@@ -45,7 +86,7 @@ if check_password():
             "Stock_Level": [4, 45, 12, 2, 30, 18, 5, 22, 1, 15, 28, 9, 3, 31]
         })
 
-    # Sidebar Interactive Filters
+    # Sidebar Controls
     st.sidebar.header("🔍 Interactive Controls")
     selected_categories = st.sidebar.multiselect(
         "Filter by Category:",
@@ -53,14 +94,12 @@ if check_password():
         default=df["Category"].unique()
     )
     
-    # Filter DataFrame based on selection
     filtered_df = df[df["Category"].isin(selected_categories)]
 
-    # 1. Executive Summary & Dynamic Insights Header
+    # Executive Summary Cards
     st.subheader("💡 Automated Executive Insights")
     total_revenue = filtered_df["Sales"].sum()
     monthly_target = 15000
-    progress_pct = min(total_revenue / monthly_target * 100, 100)
     low_stock_items = filtered_df[filtered_df["Stock_Level"] < 5]
 
     col_ins1, col_ins2, col_ins3 = st.columns(3)
@@ -68,54 +107,63 @@ if check_password():
     col_ins2.metric("Filtered Orders", f"{filtered_df['Orders'].sum():,}")
     col_ins3.metric("Inventory Alerts", f"{len(low_stock_items)} SKUs Low Stock", delta="-Action Required", delta_color="inverse")
 
-    # Gauge Chart for Target Tracking
+    # Gauge Chart styled for Dark Mode
     fig_gauge = go.Figure(go.Indicator(
         mode = "gauge+number+delta",
         value = total_revenue,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "Monthly Revenue Goal Target ($15,000)"},
+        title = {'text': "Monthly Revenue Goal Target ($15,000)", 'font': {'color': '#f8fafc'}},
         delta = {'reference': monthly_target},
         gauge = {
-            'axis': {'range': [None, 20000]},
-            'bar': {'color': "#00CC96"},
+            'axis': {'range': [None, 20000], 'tickcolor': "#f8fafc"},
+            'bar': {'color': "#3b82f6"},
+            'bgcolor': "#0f172a",
+            'borderwidth': 1,
+            'bordercolor': "rgba(255,255,255,0.1)",
             'steps': [
-                {'range': [0, 7500], 'color': "#FF6B6B"},
-                {'range': [7500, 15000], 'color': "#FFE66D"}
+                {'range': [0, 7500], 'color': "#ef4444"},
+                {'range': [7500, 15000], 'color': "#f59e0b"}
             ]
         }
     ))
-    fig_gauge.update_layout(height=220, margin=dict(l=20, r=20, t=30, b=20))
+    fig_gauge.update_layout(
+        height=220, 
+        paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)',
+        font={'color': "#f8fafc"},
+        margin=dict(l=20, r=20, t=30, b=20)
+    )
     st.plotly_chart(fig_gauge, use_container_width=True)
 
     st.markdown("---")
 
-    # 2. Advanced Interactive Visualizations
-    st.subheader("📊 Interactive Performance Visualizations")
+    # Interactive Visualizations
+    st.subheader("📊 Performance Visualizations")
     chart_col1, chart_col2 = st.columns(2)
 
     with chart_col1:
         fig_line = px.line(
             filtered_df, x="Date", y="Sales", color="Category",
             title="📈 Revenue Trend & Breakdown", markers=True,
-            hover_data=["Orders", "Stock_Level"]
+            template="plotly_dark"
         )
-        fig_line.update_traces(hovertemplate="<b>Date:</b> %{x}<br><b>Sales:</b> $%{y:,.2f}")
+        fig_line.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_line, use_container_width=True)
 
     with chart_col2:
         fig_heatmap = px.density_heatmap(
             filtered_df, x="Day_of_Week", y="Category", z="Sales",
             title="🔥 Sales Heatmap by Day & Category",
-            color_continuous_scale="Viridis"
+            color_continuous_scale="Viridis",
+            template="plotly_dark"
         )
+        fig_heatmap.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_heatmap, use_container_width=True)
 
     st.markdown("---")
 
-    # 3. Interactive Financial & ROI Simulator
+    # Financial Simulator
     st.subheader("🧮 What-If Revenue & Profit Simulator")
-    st.caption("Adjust controls below to simulate potential growth scenarios.")
-
     sim_col1, sim_col2, sim_col3 = st.columns(3)
     with sim_col1:
         price_change = st.slider("Price Adjustment (%)", min_value=-20, max_value=50, value=10, step=5)
@@ -124,12 +172,10 @@ if check_password():
     with sim_col3:
         current_margin = st.slider("Profit Margin (%)", min_value=5, max_value=60, value=25, step=5)
 
-    # Calculations
     projected_revenue = total_revenue * (1 + price_change / 100) * (1 + volume_change / 100)
     projected_profit = projected_revenue * (current_margin / 100)
     revenue_diff = projected_revenue - total_revenue
 
-    st.markdown("#### **Simulation Results:**")
     m_col1, m_col2, m_col3 = st.columns(3)
     m_col1.metric("Projected Revenue", f"${projected_revenue:,.2f}", delta=f"${revenue_diff:,.2f}")
     m_col2.metric("Projected Profit", f"${projected_profit:,.2f}")
@@ -137,9 +183,8 @@ if check_password():
 
     st.markdown("---")
 
-    # 4. Interactive Data Explorer with Download Button
+    # Data Explorer
     st.subheader("📋 Raw Data Explorer & Export")
-    
     csv_export = filtered_df.to_csv(index=False).encode('utf-8')
     st.download_button(
         label="📥 Download Filtered Dataset (CSV)",
