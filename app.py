@@ -12,6 +12,9 @@ st.markdown("""
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         color: #f8fafc;
+    /* Fix Top Title Clipping */
+    .block-container {
+        padding-top: 3.5rem !important;
     }
     
     /* Styled Metric Container Cards */
@@ -127,11 +130,11 @@ if check_password():
         }
     ))
     fig_gauge.update_layout(
-        height=220, 
+        height=250, 
         paper_bgcolor='rgba(0,0,0,0)', 
         plot_bgcolor='rgba(0,0,0,0)',
         font={'color': "#f8fafc"},
-        margin=dict(l=20, r=20, t=30, b=20)
+        margin=dict(l=20, r=20, t=50, b=20)
     )
     st.plotly_chart(fig_gauge, use_container_width=True)
 
