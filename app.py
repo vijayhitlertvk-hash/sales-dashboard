@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="E-Commerce Intelligence Portal", layout="wide")
 
-# Custom CSS for Sleek Visual Styling & UI Enhancements
+# Custom CSS for Sleek Visual Styling & Centered Login Card
 st.markdown("""
     <style>
     /* Gradient Background */
@@ -28,6 +28,15 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
     }
 
+    /* Centered Glassmorphic Login Form */
+    div[data-testid="stForm"] {
+        background-color: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
     /* Custom Header Styling */
     h1, h2, h3 {
         font-family: 'Inter', sans-serif;
@@ -36,16 +45,17 @@ st.markdown("""
     }
 
     /* Primary Accent Buttons */
-    .stButton>button {
+    .stButton>button, div[data-testid="stFormSubmitButton"]>button {
         background-color: #3b82f6;
         color: white;
         border-radius: 8px;
         border: none;
         font-weight: 600;
-        padding: 8px 16px;
+        padding: 10px 20px;
+        width: 100%;
         transition: all 0.3s ease;
     }
-    .stButton>button:hover {
+    .stButton>button:hover, div[data-testid="stFormSubmitButton"]>button:hover {
         background-color: #2563eb;
         transform: translateY(-1px);
     }
@@ -68,24 +78,54 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Password Authentication Gate
+# Employee & Client Credential Directory
+USERS = {
+    "demo": {"password": "demo123", "name": "Client Demo", "role": "Admin"},
+    "manager": {"password": "admin123", "name": "Store Manager", "role": "Admin"},
+    "staff": {"password": "staff123", "name": "Operations Staff", "role": "Staff"}
+}
+
+# Centered Multi-User Authentication Gate
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
+        st.session_state["user_info"] = None
 
     if not st.session_state["authenticated"]:
-        st.title("🔒 Client Portal Access")
-        password = st.text_input("Enter Password", type="password")
-        if st.button("Login"):
-            if password == "demo123":
-                st.session_state["authenticated"] = True
-                st.rerun()
-            else:
-                st.error("Incorrect Password")
+        # Add vertical spacing to push login card toward center
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        left_spacer, center_col, right_spacer = st.columns([1, 1.2, 1])
+
+        with center_col:
+            with st.form("login_form"):
+                st.markdown("<h2 style='text-align: center; margin-bottom: 5px;'>🔒 Client & Staff Portal</h2>", unsafe_allow_html=True)
+                st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 20px;'>Sign in with your assigned User ID</p>", unsafe_allow_html=True)
+                
+                user_id = st.text_input("User ID", placeholder="e.g., demo, manager, or staff").strip().lower()
+                password = st.text_input("Password", type="password", placeholder="Enter password")
+                submitted = st.form_submit_button("Sign In")
+
+                if submitted:
+                    if user_id in USERS and USERS[user_id]["password"] == password:
+                        st.session_state["authenticated"] = True
+                        st.session_state["user_info"] = USERS[user_id]
+                        st.rerun()
+                    else:
+                        st.error("Invalid User ID or Password")
         return False
     return True
 
 if check_password():
+    user = st.session_state["user_info"]
+    
+    # Show Logged-in Employee Badge & Logout in Sidebar
+    st.sidebar.markdown(f"👤 **{user['name']}** (`{user['role']}`)")
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state["authenticated"] = False
+        st.session_state["user_info"] = None
+        st.rerun()
+    st.sidebar.markdown("---")
+
     st.title("🚀 E-Commerce Operations & Intelligence Portal")
 
     # File Uploader
